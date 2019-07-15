@@ -1,0 +1,61 @@
+GCD tutorial:
+
+Single core devices achieve concurrency through time-slicing
+	- a thread executes some instructions on the cpu, the OS then performs a context switch and invokes another thread to execute instructions
+
+Multi-core devices execute threads at the same time
+
+GCD is built on threads
+	- GCD manages a pool of threads
+	- your program hands to GCD a block/blocks of code, and GCD decides which thread to run it on and when
+
+Queues
+	- Dispatch queues are submitted units of work (blocks of code), and they execute the blocks in FIFO order
+	- Dispathc Queues are thread safe and can be accessed from mulitple threads simultaneously
+	- Queues can be serial or concurrent.
+		- Serial Queues gaurantee that only one task runs at a time
+	- Concurrent queues allow multiple tasks to run at the same time
+		- all work starts in the order they were submitted, but may finish at different times
+
+	There are 3 types of Queues
+		1. Main Queue
+			-runs on the main thread and is a serial queue
+		2. Global Queue
+			- these are concurrent queues that are shared by the system
+			- there are 4 types: high, default, low, and background.
+				- background queue has the lowest priority and will be throttled in any i/o activity to alleviate resources 
+		3. CustomQueue
+			- Queues that a user can create and they can be concurrent or serial
+			- the tasks in these queues actually end up in one of the global queues
+
+	- A User specifies "Quality of Service" property on the DispatchQueue, and the DispatchQueue determines which of the 4 priority the task belongs to. 
+		- here are the QoS values:
+			- User-interactive, User-initiated, Utility, Background
+	- Now we know that a set of tasks can be executed simultaneously or serially, but there is somthing else that is very important when dispatching tasks to the queue
+		- We can dispatch tasks synchronously or asynchrounly to the DispatchQueue
+			- this basically means, if we dispatch synchronously, the currently executing thread will halt until the submitted task completes. 
+			i.e. the dispatch call on the DispatchQueue does not return until completion of the task.
+				DispatchQueue.sync(execute:)
+			- asynch dispatch returns immediately without waiting for the task to complete 
+				DispatchQueue.async(execute:)
+
+Example Code
+	- how to perform a downlaod and publish the results on the UI
+		DispatchQueue.global(qos: .userInitiated).asynch { [weak self] in
+
+			guard let self = self {
+				return
+			}
+
+			/// do some work
+
+			DispatchQueue.main.asynch {	[weak self] in
+				self?.someImage = downlaodedImage
+			}
+
+		}
+
+Managing Singletons
+	- Singletons are classes whose state persists thought the life of the application
+	- they are accessibile by all other classes that can see the singleton
+	
